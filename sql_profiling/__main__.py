@@ -38,7 +38,7 @@ import distributed
 from pandas_profiling import ProfileReport
 
 # %%% User Defined
-from profiling import profile_data
+from sql_profiling import profile_data
 
 
 # %% Functions
