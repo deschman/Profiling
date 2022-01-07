@@ -8,8 +8,9 @@ from setuptools import setup, find_packages
 
 # %% Script
 setup(name='sql_profiling',
-      version="0.9.0",
-      description="Automatically profile table by full name, source database type, and DSN.",
+      version="0.9.9",
+      description=\
+          "Automatically profile table by name, source database type, and DSN.",
       author="Dan Eschman",
       author_email="deschman007@gmail.com",
       python_requires='>=3.8',

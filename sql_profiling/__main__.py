@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Automatically profile table by full name, source database type, and DSN.
+Automatically profile table by name, source database type, and DSN.
 
 Params
 ------
@@ -95,7 +95,7 @@ def main() -> None:
     Profile: ProfileReport = profile_data(**kwargs)
     Profile.to_file(
         os.path.join(os.path.dirname(__file__),
-                     f"{kwargs.get('full_name')}.html"),
+                     f"{kwargs.get('table_name')}.html"),
         False)
 
 
