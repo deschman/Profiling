@@ -67,7 +67,7 @@ def profile_data(
         sample_factor: int = 1,
         compress_columns: List[str] = None,
         include_columns: List[str] = None,
-        primary_key: str = None) -> ProfileReport:
+        primary_key: List[str] = None) -> ProfileReport:
     """
     Create Pandas Profile and save to HTML.
 
@@ -89,7 +89,7 @@ def profile_data(
     include_columns : List[str], optional
         List of columns to include in the profile separated by spaces. All
         other columns will be excluded from the profile.
-    primary_key : str, optional
+    primary_key : List[str], optional
         Key used to sort data, which may provide a better profile if a data
         sample is being used.
 
@@ -120,8 +120,13 @@ WHERE
 
     distinct: str = 'DISTINCT ' if compress_columns is not None else ''
 
-    sort_clause: str = (
-        ' ORDER BY ' + primary_key if primary_key is not None else '')
+    page_clause = "LIMIT {limit} OFFSET {offset}"
+    if primary_key is not None:
+        primary_keys: str = ', '.join(primary_key)
+        page_clause: str = (
+            f"WHERE ({primary_keys}) IN (" +
+            f"SELECT {primary_keys} FROM {table_name} " +
+            f"ORDER BY {primary_keys} {page_clause})")
 
     row_count: int = pd.read_sql(
             f"SELECT COUNT(*) FROM {table_name}",
@@ -134,8 +139,8 @@ WHERE
     futures: distributed.Future = [client.submit(
         pd.read_sql,
         sql=(
-            f"SELECT{distinct} {columns} FROM {table_name}{sort_clause} " +
-            f"LIMIT {limit} OFFSET {p * limit * sample_factor}"),
+            f"SELECT{distinct} {columns} FROM {table_name} " +
+            page_clause.format(limit=limit, offset=(limit*p*sample_factor))),
         con=url
         ) for p in range(partitions)]
 

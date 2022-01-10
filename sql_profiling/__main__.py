@@ -88,6 +88,7 @@ def main() -> None:
     Profile_Argument_Parser.add_argument(
         '--primary_key',
         '-pk',
+        nargs='*',
         help="Key used to sort data, which may provide a better profile")
 
     kwargs: dict = vars(Profile_Argument_Parser.parse_args(os.sys.argv[1:]))
