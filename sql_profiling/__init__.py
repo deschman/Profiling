@@ -89,7 +89,7 @@ def profile_data(
     include_columns : List[str], optional
         List of columns to include in the profile separated by spaces. All
         other columns will be excluded from the profile.
-    primary_key : List[str], optional
+    primary_key : str, optional
         Key used to sort data, which may provide a better profile if a data
         sample is being used.
 
@@ -120,19 +120,34 @@ WHERE
 
     distinct: str = 'DISTINCT ' if compress_columns is not None else ''
 
-    page_clause = "LIMIT {limit} OFFSET {offset}"
-    if primary_key is not None:
-        primary_keys: str = ', '.join(primary_key)
-        page_clause: str = (
-            f"WHERE ({primary_keys}) IN (" +
-            f"SELECT {primary_keys} FROM {table_name} " +
-            f"ORDER BY {primary_keys} {page_clause})")
+    def get_limit(row_count: int, sample_factor: int, partitions: int) -> int:
+        return math.ceil(
+            math.ceil(
+                row_count /
+                sample_factor) /
+            partitions)
 
-    row_count: int = pd.read_sql(
-            f"SELECT COUNT(*) FROM {table_name}",
-            url).squeeze()
     partitions: int = multiprocessing.cpu_count()
-    limit: int = math.ceil(math.ceil(row_count / sample_factor) / partitions)
+    if primary_key is not None:
+        min_key: int = pd.read_sql(
+            f"SELECT MIN({primary_key}) FROM {table_name}",
+            url).squeeze()
+        max_key: int = pd.read_sql(
+            f"SELECT MAX({primary_key}) FROM {table_name}",
+            url).squeeze()
+        row_count: int = max_key - min_key
+        limit: int = get_limit(row_count, sample_factor, partitions)
+        page_clause: str = (
+            f"WHERE {primary_key} BETWEEN " +
+            f"({min_key} + ({sample_factor} * {limit} * {{p}})) AND " +
+            f"({min_key} + ({sample_factor} * {limit} * {{p}}) + {sample_factor})")
+    else:
+        row_count: int = pd.read_sql(
+                f"SELECT COUNT(*) FROM {table_name}",
+                url).squeeze()
+        limit: int = get_limit(row_count, sample_factor, partitions)
+        page_clause: str = (
+            f"LIMIT {limit} OFFSET ({limit * sample_factor} * {{p}})")
 
     client: distributed.Client = distributed.default_client()
 
@@ -140,7 +155,7 @@ WHERE
         pd.read_sql,
         sql=(
             f"SELECT{distinct} {columns} FROM {table_name} " +
-            page_clause.format(limit=limit, offset=(limit*p*sample_factor))),
+            page_clause.format(p=p)),
         con=url
         ) for p in range(partitions)]
 
