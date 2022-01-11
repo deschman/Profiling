@@ -140,7 +140,7 @@ WHERE
         page_clause: str = (
             f"WHERE {primary_key} BETWEEN " +
             f"({min_key} + ({sample_factor} * {limit} * {{p}})) AND " +
-            f"({min_key} + ({sample_factor} * {limit} * {{p}}) + {sample_factor})")
+            f"({min_key} + ({sample_factor} * {limit} * {{p}}) + {limit})")
     else:
         row_count: int = pd.read_sql(
                 f"SELECT COUNT(*) FROM {table_name}",
