@@ -164,6 +164,9 @@ WHERE
 
     df: pd.DataFrame = pd.concat(client.gather(futures))
 
+    # de-fragment dataframe
+    df = df.copy()
+
     name_suffix: str = (
         f" including {columns.count(',') + 1} columns"
         if include_columns is not None
@@ -176,5 +179,5 @@ WHERE
     return ProfileReport(
         df,
         title=f"{table_name} Pandas Profile{name_suffix}",
-        explorative=True,
+        minimal=True,
         dark_mode=True)

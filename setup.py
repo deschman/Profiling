@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 # %% Script
 setup(name='sql_profiling',
-      version="1.1.2",
+      version="1.2.0",
       description=\
           "Automatically profile table by name, source database type, and DSN.",
       author="Dan Eschman",

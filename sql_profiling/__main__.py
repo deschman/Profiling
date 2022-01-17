@@ -102,7 +102,7 @@ def main() -> None:
 # %% Script
 if __name__ == '__main__':
     try:
-        client: distributed.Client = distributed.Client()
+        client: distributed.Client = distributed.Client(processes=False)
         main()
     except Exception:
         traceback.print_exc()
